@@ -12,13 +12,16 @@ import json
 
 # Initialize Firebase only once
 if not firebase_admin._apps:
-    # Get the base64-encoded credentials from environment variable
     firebase_key_base64 = os.environ.get('FIREBASE_CREDENTIALS')
 
-    # Decode the base64 string and load it as JSON
-    firebase_key = json.loads(base64.b64decode(firebase_key_base64).decode('utf-8'))
+    if not firebase_key_base64:
+        raise ValueError("FIREBASE_CREDENTIALS environment variable is not set or is empty.")
 
-    # Initialize Firebase with decoded credentials
+    try:
+        firebase_key = json.loads(base64.b64decode(firebase_key_base64).decode('utf-8'))
+    except Exception as e:
+        raise ValueError(f"Failed to decode FIREBASE_CREDENTIALS: {e}")
+
     cred = credentials.Certificate(firebase_key)
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://smartpolyhouse7-default-rtdb.firebaseio.com/'  # Replace with your actual database URL
