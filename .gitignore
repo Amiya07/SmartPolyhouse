@@ -1,8 +1,31 @@
-build
-*.egg-info
-*.pyc
-setuptools-*
-*.so
-dist
-firebase_key.json
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
 
+# Virtual environment folders
+venv/
+env/
+ENV/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor configs
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.so
+
+# Firebase/Secrets
+firebase_key.json
+.env
