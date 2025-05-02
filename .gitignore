@@ -4,4 +4,5 @@ build
 setuptools-*
 *.so
 dist
+firebase_key.json
 
