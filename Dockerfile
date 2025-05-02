@@ -16,7 +16,10 @@ WORKDIR /app
 
 # Copy requirements.txt and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Add the --force-pi flag for Adafruit-DHT installation
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt --force-pi
 
 # Copy the rest of the application code
 COPY . .
