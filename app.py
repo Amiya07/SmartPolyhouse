@@ -2,8 +2,6 @@ from flask import Flask, render_template, request
 import pandas as pd
 import joblib
 import numpy as np
-import Adafruit_DHT
-import platform
 import firebase_admin
 from firebase_admin import credentials, db
 import os
@@ -13,7 +11,6 @@ import json
 # Initialize Firebase only once
 if not firebase_admin._apps:
     firebase_key_base64 = os.environ.get('FIREBASE_CREDENTIALS')
-
     if not firebase_key_base64:
         raise ValueError("FIREBASE_CREDENTIALS environment variable is not set or is empty.")
 
@@ -24,16 +21,16 @@ if not firebase_admin._apps:
 
     cred = credentials.Certificate(firebase_key)
     firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://smartpolyhouse7-default-rtdb.firebaseio.com/'  # Replace with your actual database URL
+        'databaseURL': 'https://smartpolyhouse7-default-rtdb.firebaseio.com/'  # your DB URL
     })
 
 app = Flask(__name__)
 
 # Load models
 irrigation_model = joblib.load("irrigation_model.pkl")
-fertigation_model = joblib.load("random_forest_model.pkl")  # optional, example
+fertigation_model = joblib.load("random_forest_model.pkl")
 
-# Dataset for plant details
+# Load plant dataset
 df = pd.read_csv("polyhouse_fertigation_dataset.csv", encoding='latin1')
 plant_names = df["Plant_Name"].unique()
 
@@ -43,8 +40,7 @@ motor_flow_rates = {
     "diaphragm": 5.0
 }
 
-# Define constant soil moisture value
-soil_moisture = 30  # Example value, change as needed
+soil_moisture = 30  # default/fixed for now
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -73,42 +69,20 @@ def index():
             ideal_temp = sum(map(int, temp_range.split("-"))) / 2
             ideal_humid = sum(map(int, humid_range.split("-"))) / 2
 
-            # Conditional check for Raspberry Pi platform
-            if platform.system() == "Linux" and "raspberrypi" in platform.node().lower():
-                # Raspberry Pi-specific code
-                sensor = Adafruit_DHT.DHT11
-                gpio_pin = 4  # Use your actual GPIO pin here
-
-                humidity, temperature = Adafruit_DHT.read_retry(sensor, gpio_pin)
-
-                # Check if sensor read was successful
-                if humidity is not None and temperature is not None:
-                    sensor_temp = temperature
-                    sensor_humid = humidity
-                else:
-                    sensor_temp = 25  # fallback
-                    sensor_humid = 60
-            else:
-                # Fallback mock values for non-Raspberry Pi platforms
-                sensor_temp = 25  # Example fallback value
-                sensor_humid = 60  # Example fallback value
-
-            # Upload to Firebase
+            # Read latest sensor data from Firebase
             try:
                 ref = db.reference('/sensor_data')
-                ref.push({
-                    "temperature": sensor_temp,
-                    "humidity": sensor_humid,
-                    "timestamp": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-                })
-                print("Firebase upload success.")
-            except Exception as firebase_error:
-                print("Firebase upload error:", firebase_error)
-                
+                latest_data = list(ref.order_by_key().limit_to_last(1).get().values())[0]
+                sensor_temp = float(latest_data["temperature"])
+                sensor_humid = float(latest_data["humidity"])
+            except Exception as firebase_read_error:
+                print("Firebase read error:", firebase_read_error)
+                sensor_temp = 25
+                sensor_humid = 60
+
             temp_error = ideal_temp - sensor_temp
             humidity_error = ideal_humid - sensor_humid
 
-            # Fertigation Calculation (manual or ML)
             req_n = max(npk_required[0] - current_n, 0)
             req_p = max(npk_required[1] - current_p, 0)
             req_k = max(npk_required[2] - current_k, 0)
@@ -129,13 +103,11 @@ def index():
             total_solution_volume = water_required + (total_bags * 50)
             time_required = total_solution_volume / motor_flow_rate if motor_flow_rate else 0
 
-            # Run irrigation model
             irrigation_input = np.array([[humidity_error, temp_error, soil_moisture]])
             irrigation_percent = irrigation_model.predict(irrigation_input)[0]
 
-            # OPTIONAL: Run fertigation model if you have it
             fertigation_input = np.array([[current_n, current_p, current_k, area_value]])
-            fertigation_dose = fertigation_model.predict(fertigation_input)[0]  # assume output is bag count
+            fertigation_dose = fertigation_model.predict(fertigation_input)[0]
 
             result = {
                 "plant_name": plant_name,
