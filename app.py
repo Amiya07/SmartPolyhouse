@@ -6,10 +6,20 @@ import Adafruit_DHT
 import platform
 import firebase_admin
 from firebase_admin import credentials, db
+import os
+import base64
+import json
 
 # Initialize Firebase only once
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")
+    # Get the base64-encoded credentials from environment variable
+    firebase_key_base64 = os.environ.get('FIREBASE_CREDENTIALS')
+
+    # Decode the base64 string and load it as JSON
+    firebase_key = json.loads(base64.b64decode(firebase_key_base64).decode('utf-8'))
+
+    # Initialize Firebase with decoded credentials
+    cred = credentials.Certificate(firebase_key)
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://smartpolyhouse7-default-rtdb.firebaseio.com/'  # Replace with your actual database URL
     })
@@ -155,4 +165,3 @@ def index():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
