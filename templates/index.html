@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Smart Polyhouse Control</title>
     <style>
         body {
@@ -8,101 +9,113 @@
             padding: 30px;
             background-color: #f4f4f4;
         }
-        h1 {
+        h1, h2 {
+            text-align: center;
             color: #007bff;
         }
         form, .results {
-            background: white;
-            padding: 20px;
+            background-color: white;
+            padding: 25px;
+            margin: 20px auto;
             border-radius: 10px;
             max-width: 800px;
-            margin: auto;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 15px;
         }
         input, select {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
         }
         .btn {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 10px 15px;
-            cursor: pointer;
+            padding: 12px;
+            margin-top: 20px;
             width: 100%;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
         }
         .btn:hover {
             background-color: #0056b3;
         }
-        .result-section {
-            margin-top: 20px;
+        .results p {
+            margin: 8px 0;
         }
     </style>
 </head>
 <body>
+
     <h1>AI-Based Smart Farming for Polyhouses</h1>
+
     <form method="post">
-        <label>Plant Name:</label>
-        <select name="plant_name" required>
+        <label for="plant_name">Plant Name:</label>
+        <select name="plant_name" id="plant_name" required>
             {% for name in plant_names %}
                 <option value="{{ name }}" {% if request.form.get('plant_name') == name %}selected{% endif %}>{{ name }}</option>
             {% endfor %}
         </select>
 
-        <label>Current Nitrogen (mg/kg):</label>
-        <input type="number" name="current_n" step="0.01" required value="{{ request.form.current_n or '' }}">
+        <label for="current_n">Current Nitrogen (mg/kg):</label>
+        <input type="number" step="0.01" name="current_n" id="current_n" required value="{{ request.form.current_n or '' }}">
 
-        <label>Current Phosphorus (mg/kg):</label>
-        <input type="number" name="current_p" step="0.01" required value="{{ request.form.current_p or '' }}">
+        <label for="current_p">Current Phosphorus (mg/kg):</label>
+        <input type="number" step="0.01" name="current_p" id="current_p" required value="{{ request.form.current_p or '' }}">
 
-        <label>Current Potassium (mg/kg):</label>
-        <input type="number" name="current_k" step="0.01" required value="{{ request.form.current_k or '' }}">
+        <label for="current_k">Current Potassium (mg/kg):</label>
+        <input type="number" step="0.01" name="current_k" id="current_k" required value="{{ request.form.current_k or '' }}">
 
-        <label>Area Unit:</label>
-        <select name="area_unit" required>
-            <option value="hectares" {% if request.form.get('area_unit') == 'hectares' %}selected{% endif %}>Hectares</option>
-            <option value="acre" {% if request.form.get('area_unit') == 'acre' %}selected{% endif %}>Acre</option>
-            <option value="square meter" {% if request.form.get('area_unit') == 'square meter' %}selected{% endif %}>Square Meter</option>
+        <label for="area_unit">Area Unit:</label>
+        <select name="area_unit" id="area_unit" required>
+            <option value="hectares">Hectares</option>
+            <option value="acre">Acre</option>
+            <option value="square meter">Square Meter</option>
         </select>
 
-        <label>Area Value:</label>
-        <input type="number" name="area_value" step="0.01" required value="{{ request.form.area_value or '' }}">
+        <label for="area_value">Area Value:</label>
+        <input type="number" step="0.01" name="area_value" id="area_value" required value="{{ request.form.area_value or '' }}">
 
-        <label>Motor Type:</label>
-        <select name="motor_type" required>
-            <option value="peristaltic" {% if request.form.get('motor_type') == 'peristaltic' %}selected{% endif %}>Peristaltic</option>
-            <option value="centrifugal" {% if request.form.get('motor_type') == 'centrifugal' %}selected{% endif %}>Centrifugal</option>
-            <option value="diaphragm" {% if request.form.get('motor_type') == 'diaphragm' %}selected{% endif %}>Diaphragm</option>
+        <label for="motor_type">Motor Type:</label>
+        <select name="motor_type" id="motor_type" required>
+            <option value="peristaltic">Peristaltic</option>
+            <option value="centrifugal">Centrifugal</option>
+            <option value="diaphragm">Diaphragm</option>
         </select>
 
-        <button type="submit" class="btn">Predict</button>
+        <button type="submit" class="btn">Submit</button>
     </form>
 
     {% if result %}
-    <div class="results result-section">
-        <h2>Results for {{ result.plant_name }}</h2>
-        <p><strong>Ideal Temp:</strong> {{ result.temp_range }}°C</p>
-        <p><strong>Ideal Humidity:</strong> {{ result.humid_range }}%</p>
-        <p><strong>Sensor Temp:</strong> {{ result.sensor_temp }}°C</p>
-        <p><strong>Sensor Humidity:</strong> {{ result.sensor_humid }}%</p>
-        <p><strong>Temp Error:</strong> {{ result.temp_error }}</p>
-        <p><strong>Humidity Error:</strong> {{ result.humidity_error }}</p>
-        <p><strong>Required NPK:</strong> N={{ result.required_npk[0] }}, P={{ result.required_npk[1] }}, K={{ result.required_npk[2] }}</p>
-        <p><strong>Fertilizer:</strong> {{ result.fertilizer_type }}</p>
-        <p><strong>Total Bags Required:</strong> {{ result.total_bags }}</p>
-        <p><strong>Water Required:</strong> {{ result.water_required }} L</p>
-        <p><strong>Total Solution Volume:</strong> {{ result.solution_volume }} L</p>
-        <p><strong>Motor Type:</strong> {{ result.motor_type }} at {{ result.motor_rate }} L/min</p>
-        <p><strong>Time Required for Application:</strong> {{ result.time_required }} mins</p>
-        {% if irrigation_result is not none %}
-        <p><strong> PredictedIrrigation Percentage:</strong> {{ result.irrigation_percent }}%</p>
-        {% endif %}
-    </div>
+        <div class="results">
+            <h2>Results for {{ result.plant_name }}</h2>
+            <p><strong>Recommended Fertilizer:</strong> {{ result.fertilizer_type }}</p>
+            <p><strong>Required NPK (mg/kg):</strong> N: {{ result.required_npk[0] }}, P: {{ result.required_npk[1] }}, K: {{ result.required_npk[2] }}</p>
+            <p><strong>Total Fertilizer Bags:</strong> {{ result.total_bags }}</p>
+            <p><strong>Water Required:</strong> {{ result.water_required }} L</p>
+            <p><strong>Solution Volume:</strong> {{ result.solution_volume }} L</p>
+            <p><strong>Motor Type:</strong> {{ result.motor_type }} ({{ result.motor_rate }} L/min)</p>
+            <p><strong>Time Required:</strong> {{ result.time_required }} min</p>
+            <hr>
+            <p><strong>Sensor Temperature:</strong> {{ result.sensor_temp }} °C</p>
+            <p><strong>Sensor Humidity:</strong> {{ result.sensor_humid }}%</p>
+            <p><strong>Temperature Error:</strong> {{ result.temp_error }}</p>
+            <p><strong>Humidity Error:</strong> {{ result.humidity_error }}</p>
+            <p><strong>Irrigation Requirement:</strong> {{ result.irrigation_percent }}%</p>
+            <p><strong>Fertigation Dose (ML model):</strong> {{ result.fertigation_dose }} bags</p>
+        </div>
     {% elif error_message %}
-    <div class="results result-section">
-        <p style="color: red;">{{ error_message }}</p>
-    </div>
+        <div class="results">
+            <h3 style="color: red;">{{ error_message }}</h3>
+        </div>
     {% endif %}
+
 </body>
 </html>
