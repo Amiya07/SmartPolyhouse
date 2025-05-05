@@ -86,12 +86,12 @@ def index():
                     sensor_temp = temperature
                     sensor_humid = humidity
                 else:
-                    sensor_temp = 25  # fallback
-                    sensor_humid = 60
+                    sensor_temp = 32  # fallback
+                    sensor_humid = 65
             else:
                 # Fallback mock values for non-Raspberry Pi platforms
-                sensor_temp = 25  # Example fallback value
-                sensor_humid = 60  # Example fallback value
+                sensor_temp = 32  # Example fallback value
+                sensor_humid = 65  # Example fallback value
 
             # Upload to Firebase
             try:
